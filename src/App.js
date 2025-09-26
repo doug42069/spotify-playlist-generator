@@ -111,7 +111,7 @@ function App() {
   }}
 >
   <img
-    src="/spotify-logo-green-background-tjanxyguzqwdqixi.jpg" 
+    src="/slogo.jpg" 
     alt="Spotify Logo"
     style={{ width: '300px', marginBottom: '30px' }}
   />
