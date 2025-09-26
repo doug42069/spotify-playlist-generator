@@ -15,12 +15,40 @@ function App() {
   const [accessToken, setAccessToken] = useState(localStorage.getItem('access_token'));
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [playlistName, setPlaylistName] = useState('');
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     handleRedirect().then(token => {
-      if (token) setAccessToken(token);
+      if (token) {
+        setAccessToken(token);
+        fetchUser(token);
+      }
     });
-  }, []);
+
+    if (accessToken && !user) {
+      fetchUser(accessToken);
+    }
+  }, [accessToken]);
+
+  const fetchUser = async (token) => {
+    try {
+      const res = await fetch("https://api.spotify.com/v1/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setUser(data);
+    } catch (err) {
+      console.error("Failed to fetch user info:", err);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('access_token');
+    setAccessToken(null);
+    setUser(null);
+    setPlaylistUrl('');
+    setPlaylistName('');
+  };
 
   const generatePlaylist = async ({ mood, playlistName, songCount }) => {
     if (!accessToken) {
@@ -29,11 +57,6 @@ function App() {
     }
 
     try {
-      const userRes = await fetch("https://api.spotify.com/v1/me", {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      const user = await userRes.json();
-
       const keywords = moodMap[mood] || "pop";
       const searchRes = await fetch(
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(keywords)}&type=track&limit=${songCount}`,
@@ -76,11 +99,23 @@ function App() {
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
       <h1>Spotify Playlist Generator</h1>
-      {!accessToken && <LoginButton onClick={loginWithPKCE} />}
-      <PlaylistForm onSubmit={generatePlaylist} />
-      <PlaylistLink url={playlistUrl} name={playlistName} />
+
+      {!accessToken ? (
+        <LoginButton onClick={loginWithPKCE} />
+      ) : (
+        <>
+          <div style={{ marginBottom: 20 }}>
+            {user && (
+              <p>Logged in as <strong>{user.display_name || user.email}</strong></p>
+            )}
+            <button onClick={logout}>Logout</button>
+          </div>
+          <PlaylistForm onSubmit={generatePlaylist} />
+          <PlaylistLink url={playlistUrl} name={playlistName} />
+        </>
+      )}
     </div>
   );
 }
