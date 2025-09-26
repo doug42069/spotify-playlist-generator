@@ -105,7 +105,7 @@ function App() {
       {!accessToken ? (
   <div
     style={{
-      backgroundImage: 'url(/login-bg.jpg)',
+      backgroundImage: 'url(/spotify-logo-green-background-tjanxyguzqwdqixi.jpg)',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       height: '100vh',
@@ -128,4 +128,5 @@ function App() {
 }
 
 export default App;
+
 
