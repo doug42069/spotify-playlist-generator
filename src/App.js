@@ -101,21 +101,22 @@ function App() {
   return (
   !accessToken ? (
     <div
-      style={{
-        backgroundImage: 'url(/spotify-logo-green-background-tjanxyguzqwdqixi.jpg)', 
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        height: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'column'
-      }}
-    >
-      <h1 style={{ color: 'white', marginBottom: '20px' }}>Spotify Playlist Generator</h1>
-      <LoginButton onClick={loginWithPKCE} />
-    </div>
+  style={{
+    backgroundColor: 'black',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
+  }}
+>
+  <img
+    src="/spotify-logo-green-background-tjanxyguzqwdqixi.jpg" 
+    alt="Spotify Logo"
+    style={{ width: '300px', marginBottom: '30px' }}
+  />
+  <LoginButton onClick={loginWithPKCE} />
+</div>
   ) : (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
       <h1>Spotify Playlist Generator</h1>
