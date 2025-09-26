@@ -103,21 +103,29 @@ function App() {
       <h1>Spotify Playlist Generator</h1>
 
       {!accessToken ? (
-        <LoginButton onClick={loginWithPKCE} />
-      ) : (
-        <>
-          <div style={{ marginBottom: 20 }}>
-            {user && (
-              <p>Logged in as <strong>{user.display_name || user.email}</strong></p>
-            )}
-            <button onClick={logout}>Logout</button>
-          </div>
-          <PlaylistForm onSubmit={generatePlaylist} />
-          <PlaylistLink url={playlistUrl} name={playlistName} />
-        </>
-      )}
+  <div
+    style={{
+      backgroundImage: 'url(/login-bg.jpg)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      height: '100vh',
+      display: 'flex',
+      justifyContent: 'center', // horizontal alignment
+      alignItems: 'center',     // vertical alignment
+      flexDirection: 'column'
+    }}
+  >
+    <h1 style={{ color: 'white', marginBottom: '20px' }}>Spotify Playlist Generator</h1>
+    <LoginButton onClick={loginWithPKCE} />
+  </div>
+) : (
+  <>
+    {/* Logged-in view */}
+  </>
+)}
     </div>
   );
 }
 
 export default App;
+
