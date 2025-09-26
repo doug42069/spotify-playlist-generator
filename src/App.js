@@ -99,34 +99,37 @@ function App() {
   };
 
   return (
+  !accessToken ? (
+    <div
+      style={{
+        backgroundImage: 'url(/spotify-logo-green-background-tjanxyguzqwdqixi.jpg)', 
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        height: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column'
+      }}
+    >
+      <h1 style={{ color: 'white', marginBottom: '20px' }}>Spotify Playlist Generator</h1>
+      <LoginButton onClick={loginWithPKCE} />
+    </div>
+  ) : (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
       <h1>Spotify Playlist Generator</h1>
-
-      {!accessToken ? (
-  <div
-    style={{
-      backgroundImage: 'url(/spotify-logo-green-background-tjanxyguzqwdqixi.jpg)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      height: '100vh',
-      display: 'flex',
-      justifyContent: 'center', // horizontal alignment
-      alignItems: 'center',     // vertical alignment
-      flexDirection: 'column'
-    }}
-  >
-    <h1 style={{ color: 'white', marginBottom: '20px' }}>Spotify Playlist Generator</h1>
-    <LoginButton onClick={loginWithPKCE} />
-  </div>
-) : (
-  <>
-    {/* Logged-in view */}
-  </>
-)}
+      <div style={{ marginBottom: 20 }}>
+        {user && (
+          <p>Logged in as <strong>{user.display_name || user.email}</strong></p>
+        )}
+        <button onClick={logout}>Logout</button>
+      </div>
+      <PlaylistForm onSubmit={generatePlaylist} />
+      <PlaylistLink url={playlistUrl} name={playlistName} />
     </div>
-  );
+  )
+);
 }
 
 export default App;
-
-
