@@ -1,4 +1,4 @@
-export const client_id = "1267af26e8d84a13a3e6e3655e7849e4";
+export const client_id = "bd53535497384e2192f495522d3f3274";
 export const redirect_uri = "https://doug42069.github.io/spotify-playlist-generator/";
 export const scopes = [
   "playlist-modify-private",
