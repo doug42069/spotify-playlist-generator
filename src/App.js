@@ -110,9 +110,8 @@ function App() {
     alignItems: 'center'
   }}
 >
-  <img
-    src="public/slogo.jpg" 
-    alt="Spotify Logo"
+  <img src={`${process.env.PUBLIC_URL}/slogo.jpg`} 
+    alt="Spotify Logo" 
     style={{ width: '300px', marginBottom: '30px' }}
   />
   <LoginButton onClick={loginWithPKCE} />
