@@ -107,11 +107,15 @@ function App() {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    color: 'white',
+    textAlign: 'center'
   }}
 >
-  <img src={`${process.env.PUBLIC_URL}/slogo.jpg`} 
-    alt="Spotify Logo" 
+  <h1 style={{ marginBottom: '20px' }}>Spotify Playlist Generator</h1>
+  <img
+    src={`${process.env.PUBLIC_URL}/slogo.jpg`}
+    alt="Spotify Logo"
     style={{ width: '300px', marginBottom: '30px' }}
   />
   <LoginButton onClick={loginWithPKCE} />
