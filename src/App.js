@@ -137,7 +137,7 @@ function App() {
     !accessToken ? (
       <div
         style={{
-          backgroundColor: '#121212',
+          backgroundColor: '#000000ff',
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
