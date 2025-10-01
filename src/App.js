@@ -8,7 +8,42 @@ const moodMap = {
   chill: "chill acoustic ambient",
   workout: "energetic workout upbeat",
   party: "party dance pop",
-  focus: "focus instrumental study"
+  focus: "focus instrumental study",
+  romantic: "romantic love ballad",
+  sad: "sad emotional mellow",
+  happy: "happy upbeat joyful",
+  "rainy day": "rainy mellow acoustic",
+  "sunny vibes": "sunshine summer pop",
+  "road trip": "road trip driving rock",
+  study: "study focus instrumental",
+  sleep: "sleep ambient calm",
+  meditation: "meditation zen ambient",
+  gaming: "gaming electronic synth",
+  throwback: "retro 80s 90s",
+  jazzy: "jazz smooth saxophone",
+  classical: "classical orchestra piano",
+  rock: "rock alternative grunge",
+  "hip hop": "hip hop rap beats",
+  country: "country acoustic americana",
+  electronic: "electronic edm house",
+  indie: "indie alternative folk",
+  metal: "metal heavy rock",
+  reggae: "reggae dub chill",
+  funk: "funk groove bass",
+  lofi: "lofi chill beats",
+  instrumental: "instrumental ambient",
+  relaxation: "relax calm peaceful",
+  travel: "world global vibes",
+  celebration: "celebration party upbeat",
+  holiday: "holiday festive seasonal",
+  spooky: "spooky halloween eerie",
+  motivational: "motivational inspiring energetic",
+  "deep focus": "deep focus ambient",
+  nature: "nature sounds forest",
+  kids: "kids fun singalong",
+  cooking: "cooking jazz upbeat",
+  cleaning: "cleaning energetic pop",
+  "creative flow": "creative flow ambient"
 };
 
 function App() {
@@ -99,41 +134,61 @@ function App() {
   };
 
   return (
-  !accessToken ? (
-    <div
-  style={{
-    backgroundColor: 'black',
-    height: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    color: 'white',
-    textAlign: 'center'
-  }}
->
-  <h1 style={{ marginBottom: '20px' }}>Spotify Playlist Generator</h1>
-  <img
-    src={`${process.env.PUBLIC_URL}/slogo.jpg`}
-    alt="Spotify Logo"
-    style={{ width: '300px', marginBottom: '30px' }}
-  />
-  <LoginButton onClick={loginWithPKCE} />
-</div>
-  ) : (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
-      <h1>Spotify Playlist Generator</h1>
-      <div style={{ marginBottom: 20 }}>
-        {user && (
-          <p>Logged in as <strong>{user.display_name || user.email}</strong></p>
-        )}
-        <button onClick={logout}>Logout</button>
+    !accessToken ? (
+      <div
+        style={{
+          backgroundColor: '#121212',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          color: 'white',
+          textAlign: 'center'
+        }}
+      >
+        <h1 style={{ marginBottom: '20px' }}>Spotify Playlist Generator</h1>
+        <img
+          src={`${process.env.PUBLIC_URL}/slogo.jpg`}
+          alt="Spotify Logo"
+          style={{ width: '300px', marginBottom: '30px' }}
+        />
+        <LoginButton onClick={loginWithPKCE} />
       </div>
-      <PlaylistForm onSubmit={generatePlaylist} />
-      <PlaylistLink url={playlistUrl} name={playlistName} />
-    </div>
-  )
-);
+    ) : (
+      <div style={{
+        maxWidth: 700,
+        margin: '40px auto',
+        padding: '30px',
+        backgroundColor: '#ffffff',
+        borderRadius: '12px',
+        boxShadow: '0 6px 16px rgba(0,0,0,0.1)',
+        fontFamily: 'Arial, sans-serif'
+      }}>
+        <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>Spotify Playlist Generator</h1>
+        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+          {user && (
+            <p>Logged in as <strong>{user.display_name || user.email}</strong></p>
+          )}
+          <button onClick={logout} style={{
+            padding: '10px 20px',
+            backgroundColor: '#e74c3c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}>
+            Logout
+          </button>
+        </div>
+        <PlaylistForm onSubmit={generatePlaylist} />
+        <div style={{ marginTop: '30px' }}>
+          <PlaylistLink url={playlistUrl} name={playlistName} />
+        </div>
+      </div>
+    )
+  );
 }
 
 export default App;
