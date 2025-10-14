@@ -46,148 +46,163 @@ const moodMap = {
   "creative flow": "creative flow ambient"
 };
 
+function LoadingBar({ progress }) {
+  return (
+    <div style={{ width: '100%', background: '#eee', height: 12, borderRadius: 6, overflow: 'hidden' }}>
+      <div style={{ width: `${progress}%`, height: '100%', transition: 'width 300ms linear', background: '#1DB954' }} />
+    </div>
+  );
+}
+
+function TrackUrisFromRecommendations(token, params) {
+  const qs = new URLSearchParams({ ...params, limit: 20 }).toString();
+  return fetch(`https://api.spotify.com/v1/recommendations?${qs}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then(r=>r.json()).then(data => {
+    if (!data.tracks) return [];
+    return data.tracks.map(t => t.uri);
+  });
+}
+
+function TrackUrisFromSearch(token, query) {
+  const qs = new URLSearchParams({ q: query, type: 'track', limit: 20 }).toString();
+  return fetch(`https://api.spotify.com/v1/search?${qs}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then(r=>r.json()).then(data => {
+    if (!data.tracks) return [];
+    return data.tracks.items.map(t => t.uri);
+  });
+}
+
+async function createPlaylistAndAddTracks(token, userId, name, uris) {
+  const createRes = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, public: false, description: 'Generated with Spotify Playlist Generator' })
+  });
+  const playlist = await createRes.json();
+  await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uris })
+  });
+  return playlist;
+}
+
 function App() {
-  const [accessToken, setAccessToken] = useState(localStorage.getItem('access_token'));
+  const [accessToken, setAccessToken] = useState(null);
+  const [loggedIn, setLoggedIn] = useState(false);
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [playlistName, setPlaylistName] = useState('');
-  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  useEffect(() => {
-    handleRedirect().then(token => {
+  useEffect(()=>{
+    (async ()=>{
+      const token = await handleRedirect();
       if (token) {
         setAccessToken(token);
-        fetchUser(token);
+        setLoggedIn(true);
+      } else {
+        const existing = localStorage.getItem('access_token');
+        if (existing) {
+          setAccessToken(existing);
+          setLoggedIn(true);
+        }
       }
-    });
+    })();
+  }, []);
 
-    if (accessToken && !user) {
-      fetchUser(accessToken);
-    }
-  }, [accessToken]);
-
-  const fetchUser = async (token) => {
-    try {
-      const res = await fetch("https://api.spotify.com/v1/me", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setUser(data);
-    } catch (err) {
-      console.error("Failed to fetch user info:", err);
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    setAccessToken(null);
-    setUser(null);
-    setPlaylistUrl('');
-    setPlaylistName('');
-  };
-
-  const generatePlaylist = async ({ mood, playlistName, songCount }) => {
-    if (!accessToken) {
-      alert("Please login first!");
-      return;
-    }
+  async function generatePlaylist({ mode, mood, genre, artist, title }) {
+    if (!accessToken) return alert('Please login to Spotify first.');
+    setLoading(true);
+    setProgress(5);
 
     try {
-      const keywords = moodMap[mood] || "pop";
-      const searchRes = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(keywords)}&type=track&limit=${songCount}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const searchData = await searchRes.json();
-      const trackUris = searchData.tracks.items.map(t => t.uri);
+      setProgress(12);
+      const me = await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: `Bearer ${accessToken}` } });
+      const meJson = await me.json();
+      const userId = meJson.id;
+      setProgress(25);
 
-      const playlistRes = await fetch(`https://api.spotify.com/v1/users/${user.id}/playlists`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: playlistName,
-          description: `Auto-generated ${mood} playlist`,
-          public: false
-        })
-      });
-      const newPlaylist = await playlistRes.json();
-
-      if (trackUris.length) {
-        await fetch(`https://api.spotify.com/v1/playlists/${newPlaylist.id}/tracks`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ uris: trackUris })
-        });
+      let uris = [];
+      if (mode === 'genre') {
+        const genreParam = genre.toLowerCase().replace(/\s+/g, '-');
+        setProgress(40);
+        uris = await TrackUrisFromRecommendations(accessToken, { seed_genres: genreParam });
+        setProgress(65);
+      } else if (mode === 'artist') {
+        setProgress(40);
+        const qs = new URLSearchParams({ q: artist, type: 'artist', limit: 1 }).toString();
+        const res = await fetch(`https://api.spotify.com/v1/search?${qs}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+        const data = await res.json();
+        const artistObj = data.artists && data.artists.items && data.artists.items[0];
+        if (!artistObj) throw new Error('Artist not found');
+        const artistId = artistObj.id;
+        setProgress(55);
+        const topRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, { headers: { Authorization: `Bearer ${accessToken}` } });
+        const topData = await topRes.json();
+        uris = (topData.tracks || []).slice(0, 20).map(t => t.uri);
+        if (uris.length < 8) {
+          const more = await TrackUrisFromRecommendations(accessToken, { seed_artists: artistId });
+          uris = uris.concat(more).slice(0,20);
+        }
+        setProgress(75);
+      } else {
+        setProgress(35);
+        const keywords = (moodMap[mood] || mood || '').trim();
+        if (!keywords) {
+          uris = await TrackUrisFromSearch(accessToken, mood);
+        } else {
+          uris = await TrackUrisFromSearch(accessToken, keywords);
+          if (uris.length < 8) {
+            const seedGenres = keywords.split(' ').slice(0,2).join(',');
+            const recs = await TrackUrisFromRecommendations(accessToken, { seed_genres: seedGenres });
+            uris = uris.concat(recs).slice(0,20);
+          }
+        }
+        setProgress(70);
       }
 
-      setPlaylistUrl(newPlaylist.external_urls.spotify);
-      setPlaylistName(playlistName);
+      if (!uris || uris.length === 0) throw new Error('No tracks found for that selection.');
+
+      const finalName = title || (mode === 'genre' ? `Genre: ${genre}` : mode === 'artist' ? `Artist: ${artist}` : `Mood: ${mood}`);
+      setProgress(80);
+      const playlist = await createPlaylistAndAddTracks(accessToken, userId, finalName, uris);
+      setProgress(95);
+
+      setPlaylistUrl(playlist.external_urls?.spotify || `https://open.spotify.com/playlist/${playlist.id}`);
+      setPlaylistName(finalName);
+      setProgress(100);
+      setTimeout(()=>{ setLoading(false); setProgress(0); }, 500);
+
     } catch (err) {
-      console.error("Error creating playlist:", err);
-      alert("Something went wrong. Check the console.");
+      console.error(err);
+      setLoading(false);
+      setProgress(0);
+      alert('Error creating playlist: ' + (err.message || err));
     }
-  };
+  }
 
   return (
-    !accessToken ? (
-      <div
-        style={{
-          backgroundColor: '#000000ff',
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          color: 'white',
-          textAlign: 'center'
-        }}
-      >
-        <h1 style={{ marginBottom: '20px' }}>Spotify Playlist Generator</h1>
-        <img
-          src={`${process.env.PUBLIC_URL}/slogo.jpg`}
-          alt="Spotify Logo"
-          style={{ width: '300px', marginBottom: '30px' }}
-        />
-        <LoginButton onClick={loginWithPKCE} />
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: 20 }}>
+      <h1>Spotify Playlist Generator</h1>
+      <div style={{ marginBottom: 12 }}>
+        <LoginButton />
       </div>
-    ) : (
-      <div style={{
-        maxWidth: 700,
-        margin: '40px auto',
-        padding: '30px',
-        backgroundColor: '#ffffff',
-        borderRadius: '12px',
-        boxShadow: '0 6px 16px rgba(0,0,0,0.1)',
-        fontFamily: 'Arial, sans-serif'
-      }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>Spotify Playlist Generator</h1>
-        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-          {user && (
-            <p>Logged in as <strong>{user.display_name || user.email}</strong></p>
-          )}
-          <button onClick={logout} style={{
-            padding: '10px 20px',
-            backgroundColor: '#e74c3c',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}>
-            Logout
-          </button>
+
+      {loading && (
+        <div style={{ marginBottom: 12 }}>
+          <LoadingBar progress={progress} />
+          <div style={{ marginTop: 8 }}>{Math.round(progress)}%</div>
         </div>
-        <PlaylistForm onSubmit={generatePlaylist} />
-        <div style={{ marginTop: '30px' }}>
-          <PlaylistLink url={playlistUrl} name={playlistName} />
-        </div>
+      )}
+
+      <PlaylistForm onSubmit={generatePlaylist} />
+      <div style={{ marginTop: 20 }}>
+        <PlaylistLink url={playlistUrl} name={playlistName} />
       </div>
-    )
+    </div>
   );
 }
 
