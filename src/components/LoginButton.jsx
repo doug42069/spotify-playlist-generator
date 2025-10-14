@@ -1,3 +1,4 @@
+// src/components/LoginButton.jsx
 export default function LoginButton({ onClick }) {
   return (
     <button
@@ -10,7 +11,7 @@ export default function LoginButton({ onClick }) {
         border: 'none',
         borderRadius: '30px',
         cursor: 'pointer',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
       }}
     >
       Login to Spotify
