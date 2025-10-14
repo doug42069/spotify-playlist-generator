@@ -1,8 +1,11 @@
 export default function PlaylistLink({ url, name }) {
-  return url ? (
+  if (!url) return null;
+  return (
     <div>
-      Playlist "<strong>{name}</strong>" created!{' '}
-      <a href={url} target="_blank" rel="noopener noreferrer">Open in Spotify</a>
+      <div>Playlist <strong>{name}</strong> created!</div>
+      <div style={{ marginTop: 8 }}>
+        <a href={url} target="_blank" rel="noopener noreferrer">Open in Spotify</a>
+      </div>
     </div>
-  ) : null;
+  );
 }

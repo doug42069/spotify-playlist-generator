@@ -8,76 +8,86 @@ const moodOptions = [
   "deep focus", "nature", "kids", "cooking", "cleaning", "creative flow"
 ];
 
-export default function PlaylistForm({ onSubmit }) {
-  const [mood, setMood] = useState('');
-  const [playlistName, setPlaylistName] = useState('');
-  const [songCount, setSongCount] = useState(20);
+const genreOptions = [
+  "pop","rock","hip-hop","indie","electronic","dance","jazz","classical","blues","country",
+  "reggae","metal","folk","soul","r&b","latin","punk","funk","ambient","k-pop","disco"
+];
 
-  const handleSubmit = (e) => {
+export default function PlaylistForm({ onSubmit }) {
+  const [mode, setMode] = useState('mood'); // 'mood' | 'genre' | 'artist'
+  const [mood, setMood] = useState('');
+  const [genre, setGenre] = useState(genreOptions[0]);
+  const [artist, setArtist] = useState('');
+  const [title, setTitle] = useState('');
+
+  function handleSubmit(e) {
     e.preventDefault();
-    onSubmit({ mood, playlistName, songCount });
-  };
+    if (mode === 'mood' && !mood) return alert('Please choose a mood');
+    if (mode === 'artist' && !artist.trim()) return alert('Please enter an artist name');
+    if (mode === 'genre' && !genre) return alert('Please choose a genre');
+    const payload = { mode, mood, genre, artist: artist.trim(), title: title.trim() || undefined };
+    onSubmit(payload);
+  }
 
   return (
-    <form onSubmit={handleSubmit} style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '20px',
-      backgroundColor: '#f9f9f9',
-      padding: '30px',
-      borderRadius: '12px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-    }}>
-      <label style={{ fontWeight: 'bold' }}>
-        Mood:
-        <select
-          value={mood}
-          onChange={(e) => setMood(e.target.value)}
-          required
-          style={{ padding: '10px', marginTop: '8px', borderRadius: '6px', border: '1px solid #ccc' }}
-        >
-          <option value="">--Choose one--</option>
-          {moodOptions.map((m) => (
-            <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>
-          ))}
-        </select>
-      </label>
+    <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12 }}>
+      <div>
+        <label style={{ marginRight: 8 }}><strong>Type</strong></label>
+        <label style={{ marginRight: 8 }}>
+          <input type="radio" name="mode" value="mood" checked={mode==='mood'} onChange={()=>setMode('mood')} /> Mood
+        </label>
+        <label style={{ marginRight: 8 }}>
+          <input type="radio" name="mode" value="genre" checked={mode==='genre'} onChange={()=>setMode('genre')} /> Genre
+        </label>
+        <label>
+          <input type="radio" name="mode" value="artist" checked={mode==='artist'} onChange={()=>setMode('artist')} /> Artist
+        </label>
+      </div>
 
-      <label style={{ fontWeight: 'bold' }}>
-        Playlist Name:
-        <input
-          type="text"
-          value={playlistName}
-          onChange={(e) => setPlaylistName(e.target.value)}
-          required
-          style={{ padding: '10px', marginTop: '8px', borderRadius: '6px', border: '1px solid #ccc' }}
-        />
-      </label>
+      <div>
+        <label style={{ display: 'block', fontWeight: 'bold' }}>Playlist title (optional)</label>
+        <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. My Chill Mix" style={{ padding: 8, width: '100%' }} />
+      </div>
 
-      <label style={{ fontWeight: 'bold' }}>
-        Number of Songs:
-        <input
-          type="range"
-          min="1"
-          max="50"
-          value={songCount}
-          onChange={(e) => setSongCount(e.target.value)}
-          style={{ width: '100%' }}
-        />
-        <span>{songCount} songs</span>
-      </label>
+      {mode === 'mood' && (
+        <div>
+          <label style={{ display: 'block', fontWeight: 'bold' }}>Mood</label>
+          <select value={mood} onChange={e=>setMood(e.target.value)} style={{ padding: 8, width: '100%' }}>
+            <option value="">-- choose a mood --</option>
+            {moodOptions.map(m=> <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+      )}
 
-      <button type="submit" style={{
-        padding: '12px',
-        backgroundColor: '#1DB954',
-        color: 'white',
-        border: 'none',
-        borderRadius: '6px',
-        fontWeight: 'bold',
-        cursor: 'pointer'
-      }}>
-        Generate Playlist
-      </button>
+      {mode === 'genre' && (
+        <div>
+          <label style={{ display: 'block', fontWeight: 'bold' }}>Genre</label>
+          <select value={genre} onChange={e=>setGenre(e.target.value)} style={{ padding: 8, width: '100%' }}>
+            {genreOptions.map(g=> <option key={g} value={g}>{g}</option>)}
+          </select>
+        </div>
+      )}
+
+      {mode === 'artist' && (
+        <div>
+          <label style={{ display: 'block', fontWeight: 'bold' }}>Artist name</label>
+          <input value={artist} onChange={e=>setArtist(e.target.value)} placeholder="e.g. Tame Impala" style={{ padding: 8, width: '100%' }} />
+        </div>
+      )}
+
+      <div>
+        <button type="submit" style={{
+          padding: '12px',
+          backgroundColor: '#1DB954',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          fontWeight: 'bold',
+          cursor: 'pointer'
+        }}>
+          Generate Playlist
+        </button>
+      </div>
     </form>
   );
 }
