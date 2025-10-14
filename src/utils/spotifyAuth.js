@@ -21,9 +21,9 @@ export async function sha256(buffer) {
   return await crypto.subtle.digest('SHA-256', buffer);
 }
 
-export async function loginWithPKCE() {
+export async function loginWithPKCE() {s
   const codeVerifier = generateRandomString(128);
-  localStorage.setItem('code_verifier', codeVerifier);
+  localStorage.setItem('code_verifier', codeVerifier);s
 
   const encoder = new TextEncoder();
   const codeChallenge = base64URLEncode(await sha256(encoder.encode(codeVerifier)));
@@ -64,4 +64,3 @@ export async function handleRedirect() {
   window.history.replaceState({}, document.title, redirect_uri);
   return data.access_token;
 }
-
