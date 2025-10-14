@@ -14,18 +14,19 @@ const genreOptions = [
 ];
 
 export default function PlaylistForm({ onSubmit }) {
-  const [mode, setMode] = useState('mood'); // 'mood' | 'genre' | 'artist'
+  const [mode, setMode] = useState('mood');
   const [mood, setMood] = useState('');
   const [genre, setGenre] = useState(genreOptions[0]);
   const [artist, setArtist] = useState('');
   const [title, setTitle] = useState('');
+  const [count, setCount] = useState(20);
 
   function handleSubmit(e) {
     e.preventDefault();
     if (mode === 'mood' && !mood) return alert('Please choose a mood');
     if (mode === 'artist' && !artist.trim()) return alert('Please enter an artist name');
     if (mode === 'genre' && !genre) return alert('Please choose a genre');
-    const payload = { mode, mood, genre, artist: artist.trim(), title: title.trim() || undefined };
+    const payload = { mode, mood, genre, artist: artist.trim(), title: title.trim() || undefined, count: Number(count) || 20 };
     onSubmit(payload);
   }
 
@@ -74,6 +75,18 @@ export default function PlaylistForm({ onSubmit }) {
           <input value={artist} onChange={e=>setArtist(e.target.value)} placeholder="e.g. Tame Impala" style={{ padding: 8, width: '100%' }} />
         </div>
       )}
+
+      <div>
+        <label style={{ display: 'block', fontWeight: 'bold' }}>Number of songs: {count}</label>
+        <input
+          type="range"
+          min="1"
+          max="50"
+          value={count}
+          onChange={e=>setCount(e.target.value)}
+          style={{ width: '100%' }}
+        />
+      </div>
 
       <div>
         <button type="submit" style={{

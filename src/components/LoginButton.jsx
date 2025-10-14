@@ -1,20 +1,19 @@
-// src/components/LoginButton.jsx
-export default function LoginButton({ onClick }) {
+export default function LoginButton({ onClick, children }) {
   return (
     <button
       onClick={onClick}
       style={{
         padding: '12px 24px',
         fontSize: '18px',
-        backgroundColor: '#2c7a48ff',
+        backgroundColor: '#1DB954',
         color: 'white',
         border: 'none',
-        borderRadius: '30px',
+        borderRadius: 30,
         cursor: 'pointer',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        boxShadow: '0 6px 18px rgba(0,0,0,0.3)'
       }}
     >
-      Login to Spotify
+      {children || 'Login to Spotify'}
     </button>
   );
 }
