@@ -92,6 +92,8 @@ async function createPlaylistAndAddTracks(token, userId, name, uris) {
 function App() {
   const [accessToken, setAccessToken] = useState(null);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userId, setUserId] = useState('');
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [playlistName, setPlaylistName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -99,19 +101,32 @@ function App() {
 
   useEffect(()=>{
     (async ()=>{
-      const token = await handleRedirect();
-      if (token) {
-        setAccessToken(token);
-        setLoggedIn(true);
-      } else {
-        const existing = localStorage.getItem('access_token');
-        if (existing) {
-          setAccessToken(existing);
+      try {
+        const token = await handleRedirect();
+        const stored = token || localStorage.getItem('access_token');
+        if (stored) {
+          setAccessToken(stored);
           setLoggedIn(true);
+          const me = await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: `Bearer ${stored}` } });
+          const meJson = await me.json();
+          setUserName(meJson.display_name || meJson.id || '');
+          setUserId(meJson.id || '');
         }
+      } catch (err) {
+        console.error('Error on auth init:', err);
       }
     })();
   }, []);
+
+  function handleLogout() {
+    localStorage.removeItem('access_token');
+    setAccessToken(null);
+    setLoggedIn(false);
+    setUserName('');
+    setUserId('');
+    setPlaylistUrl('');
+    setPlaylistName('');
+  }
 
   async function generatePlaylist({ mode, mood, genre, artist, title }) {
     if (!accessToken) return alert('Please login to Spotify first.');
@@ -119,11 +134,16 @@ function App() {
     setProgress(5);
 
     try {
-      setProgress(12);
-      const me = await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: `Bearer ${accessToken}` } });
-      const meJson = await me.json();
-      const userId = meJson.id;
-      setProgress(25);
+      let currentUserId = userId;
+      if (!currentUserId) {
+        setProgress(12);
+        const me = await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: `Bearer ${accessToken}` } });
+        const meJson = await me.json();
+        currentUserId = meJson.id;
+        setUserName(meJson.display_name || meJson.id || '');
+        setUserId(currentUserId);
+        setProgress(25);
+      }
 
       let uris = [];
       if (mode === 'genre') {
@@ -166,9 +186,10 @@ function App() {
 
       if (!uris || uris.length === 0) throw new Error('No tracks found for that selection.');
 
+      // create playlist and add tracks
       const finalName = title || (mode === 'genre' ? `Genre: ${genre}` : mode === 'artist' ? `Artist: ${artist}` : `Mood: ${mood}`);
       setProgress(80);
-      const playlist = await createPlaylistAndAddTracks(accessToken, userId, finalName, uris);
+      const playlist = await createPlaylistAndAddTracks(accessToken, currentUserId, finalName, uris);
       setProgress(95);
 
       setPlaylistUrl(playlist.external_urls?.spotify || `https://open.spotify.com/playlist/${playlist.id}`);
@@ -184,23 +205,52 @@ function App() {
     }
   }
 
+  if (!loggedIn) {
+    return (
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: 20, textAlign: 'center' }}>
+        <h1>Spotify Playlist Generator</h1>
+        <p>Login to Spotify to create playlists from moods, genres, or artists.</p>
+        <div style={{ marginTop: 20 }}>
+          <LoginButton onClick={() => loginWithPKCE()} />
+        </div>
+      </div>
+    );
+  }
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: 20 }}>
-      <h1>Spotify Playlist Generator</h1>
-      <div style={{ marginBottom: 12 }}>
-        <LoginButton />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h1 style={{ margin: 0 }}>Spotify Playlist Generator</h1>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 14 }}>Signed in as <strong>{userName || 'Unknown'}</strong></div>
+          <button
+            onClick={handleLogout}
+            style={{
+              marginTop: 8,
+              padding: '8px 12px',
+              borderRadius: 8,
+              border: 'none',
+              background: '#e63946',
+              color: 'white',
+              cursor: 'pointer'
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
-      {loading && (
-        <div style={{ marginBottom: 12 }}>
-          <LoadingBar progress={progress} />
-          <div style={{ marginTop: 8 }}>{Math.round(progress)}%</div>
-        </div>
-      )}
-
-      <PlaylistForm onSubmit={generatePlaylist} />
       <div style={{ marginTop: 20 }}>
-        <PlaylistLink url={playlistUrl} name={playlistName} />
+        {loading && (
+          <div style={{ marginBottom: 12 }}>
+            <LoadingBar progress={progress} />
+            <div style={{ marginTop: 8 }}>{Math.round(progress)}%</div>
+          </div>
+        )}
+
+        <PlaylistForm onSubmit={generatePlaylist} />
+        <div style={{ marginTop: 20 }}>
+          <PlaylistLink url={playlistUrl} name={playlistName} />
+        </div>
       </div>
     </div>
   );
