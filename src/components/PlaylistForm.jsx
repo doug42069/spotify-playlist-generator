@@ -47,7 +47,7 @@ export default function PlaylistForm({ onSubmit }) {
 
       <div>
         <label style={{ display: 'block', fontWeight: 'bold' }}>Playlist title (optional)</label>
-        <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. My Chill Mix" style={{ padding: 8, width: '100%' }} />
+        <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. My Playlist" style={{ padding: 8, width: '100%' }} />
       </div>
 
       {mode === 'mood' && (
@@ -72,7 +72,7 @@ export default function PlaylistForm({ onSubmit }) {
       {mode === 'artist' && (
         <div>
           <label style={{ display: 'block', fontWeight: 'bold' }}>Artist name</label>
-          <input value={artist} onChange={e=>setArtist(e.target.value)} placeholder="e.g. Tame Impala" style={{ padding: 8, width: '100%' }} />
+          <input value={artist} onChange={e=>setArtist(e.target.value)} placeholder="e.g. Childish Gambino" style={{ padding: 8, width: '100%' }} />
         </div>
       )}
 
