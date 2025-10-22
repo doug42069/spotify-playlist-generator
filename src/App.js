@@ -183,46 +183,76 @@ function App() {
           uris = uris.concat(more).slice(0, desired);
         }
       } else if (mode === 'artist') {
-        setProgress(35);
-        const qs = new URLSearchParams({ q: artist, type: 'artist', limit: 1 }).toString();
-        const res = await fetch(`https://api.spotify.com/v1/search?${qs}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-        if (!res.ok) throw new Error('Artist search failed');
-        const data = await res.json();
-        const artistObj = data.artists?.items?.[0];
-        if (!artistObj) throw new Error('Artist not found');
-        const artistId = artistObj.id;
-        const artistGenres = (artistObj.genres || []).slice(0, 2);
+  setProgress(35);
+  const qs = new URLSearchParams({ q: artist, type: 'artist', limit: 1 }).toString();
+  const res = await fetch(`https://api.spotify.com/v1/search?${qs}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error('Artist search failed');
+  const data = await res.json();
+  const artistObj = data.artists?.items?.[0];
+  if (!artistObj) throw new Error('Artist not found');
+  const artistId = artistObj.id;
+  const artistGenres = (artistObj.genres || []).slice(0, 2);
 
-        setProgress(50);
+  setProgress(50);
 
-      const topRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, { headers: { Authorization: `Bearer ${accessToken}` } });
-        let uris = [];
-        if (topRes.ok) {
-          const topData = await topRes.json();
-          uris = (topData.tracks || []).map(t => t.uri);
+  let urisSet = new Set();
+  try {
+    const topRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (topRes.ok) {
+      const topData = await topRes.json();
+      (topData.tracks || []).forEach(t => t.uri && urisSet.add(t.uri));
+    }
+  } catch (e) {
+    console.warn('Top tracks fetch failed', e);
+  }
+
+  if (urisSet.size < desired) {
+    try {
+      const albQs = new URLSearchParams({
+        include_groups: 'album,single,compilation,appears_on',
+        limit: 50
+      }).toString();
+      const albumsRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/albums?${albQs}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (albumsRes.ok) {
+        const albumsData = await albumsRes.json();
+        const albums = albumsData.items || [];
+        for (const a of albums) {
+          if (urisSet.size >= desired) break;
+          const tracksRes = await fetch(`https://api.spotify.com/v1/albums/${a.id}/tracks?limit=50`, { headers: { Authorization: `Bearer ${accessToken}` } });
+          if (!tracksRes.ok) continue;
+          const tracksData = await tracksRes.json();
+          (tracksData.items || []).forEach(t => { if (t.uri) urisSet.add(t.uri); });
         }
-
-        if (uris.length < desired) {
-          const need = desired - uris.length;
-          const params = { seed_artists: artistId };
-          if (artistGenres.length > 0) params.seed_genres = artistGenres.join(',');
-
-      const recs = await TrackUrisFromRecommendations(accessToken, params, need * 2); 
-      const setUris = new Set(uris);
-          for (const u of recs) {
-          if (setUris.size >= desired) break;
-          setUris.add(u);
-        }
-          uris = Array.from(setUris).slice(0, desired);
-        }
-
-        if (uris.length < desired) {
-        const fallback = await TrackUrisFromSearch(accessToken, artist, desired - uris.length);
-        const setUris = new Set(uris.concat(fallback));
-        uris = Array.from(setUris).slice(0, desired);
       }
+    } catch (e) {
+      console.warn('Artist albums fetch failed', e);
+    }
+  }
 
-  setProgress(75);
+  setProgress(65);
+
+  if (urisSet.size < desired) {
+    const need = desired - urisSet.size;
+    const params = { seed_artists: artistId };
+    if (artistGenres.length > 0) params.seed_genres = artistGenres.join(',');
+    const recs = await TrackUrisFromRecommendations(accessToken, params, Math.min(100, need * 3));
+    for (const u of recs) {
+      if (urisSet.size >= desired) break;
+      urisSet.add(u);
+    }
+  }
+
+  setProgress(80);
+
+  if (urisSet.size < desired) {
+    const need = desired - urisSet.size;
+    const fallback = await TrackUrisFromSearch(accessToken, artist, need);
+    fallback.forEach(u => { if (urisSet.size < desired) urisSet.add(u); });
+  }
+
+  uris = Array.from(urisSet).slice(0, desired);
+  setProgress(95);
+
       } else {
         setProgress(30);
         const keywords = (moodMap[mood] || mood || '').trim();
