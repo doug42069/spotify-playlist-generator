@@ -194,25 +194,35 @@ function App() {
         const artistGenres = (artistObj.genres || []).slice(0, 2);
 
         setProgress(50);
-        const topRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, { headers: { Authorization: `Bearer ${accessToken}` } });
+
+      const topRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, { headers: { Authorization: `Bearer ${accessToken}` } });
+        let uris = [];
         if (topRes.ok) {
           const topData = await topRes.json();
-          uris = (topData.tracks || []).map(t => t.uri).slice(0, desired);
+          uris = (topData.tracks || []).map(t => t.uri);
         }
 
         if (uris.length < desired) {
           const need = desired - uris.length;
           const params = { seed_artists: artistId };
           if (artistGenres.length > 0) params.seed_genres = artistGenres.join(',');
-          const more = await TrackUrisFromRecommendations(accessToken, params, need);
-          const setUris = new Set(uris);
-          for (const u of more) {
-            if (setUris.size >= desired) break;
-            if (!setUris.has(u)) setUris.add(u);
-          }
+
+      const recs = await TrackUrisFromRecommendations(accessToken, params, need * 2); 
+      const setUris = new Set(uris);
+          for (const u of recs) {
+          if (setUris.size >= desired) break;
+          setUris.add(u);
+        }
           uris = Array.from(setUris).slice(0, desired);
         }
-        setProgress(75);
+
+        if (uris.length < desired) {
+        const fallback = await TrackUrisFromSearch(accessToken, artist, desired - uris.length);
+        const setUris = new Set(uris.concat(fallback));
+        uris = Array.from(setUris).slice(0, desired);
+      }
+
+  setProgress(75);
       } else {
         setProgress(30);
         const keywords = (moodMap[mood] || mood || '').trim();
