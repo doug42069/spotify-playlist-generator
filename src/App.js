@@ -175,13 +175,42 @@ function App() {
       let uris = [];
 
       if (mode === 'genre') {
-        setProgress(30);
-        const seed = String(genre).toLowerCase().replace(/\s+/g, '-');
-        uris = await TrackUrisFromRecommendations(accessToken, { seed_genres: seed }, desired);
-        if (uris.length < desired) {
-          const more = await TrackUrisFromSearch(accessToken, genre, desired - uris.length);
-          uris = uris.concat(more).slice(0, desired);
-        }
+  setProgress(30);
+  const seed = String(genre).toLowerCase().replace(/\s+/g, '-');
+
+  const supportedGenres = [
+    "acoustic","afrobeat","alt-rock","alternative","ambient","anime","black-metal",
+    "bluegrass","blues","bossanova","brazil","breakbeat","british","cantopop","chicago-house",
+    "classical","club","comedy","country","dance","dancehall","death-metal","deep-house",
+    "detroit-techno","disco","drum-and-bass","dub","dubstep","edm","electronic","emo","folk",
+    "forro","french","funk","garage","german","gospel","goth","grindcore","groove","grunge",
+    "guitar","happy","hard-rock","hardcore","hardstyle","heavy-metal","hip-hop","holidays",
+    "house","idm","indian","indie","indie-pop","industrial","iranian","j-dance","j-idol","j-pop",
+    "j-rock","jazz","k-pop","kids","latin","latino","malay","mandopop","metal","metal-misc",
+    "metalcore","minimal-techno","movies","mpb","new-age","new-release","opera","pagode","party",
+    "philippines-opm","piano","pop","pop-film","post-dubstep","power-pop","progressive-house",
+    "psych-rock","punk","punk-rock","r-n-b","rainy-day","reggae","reggaeton","road-trip","rock",
+    "rock-n-roll","rockabilly","romance","sad","salsa","samba","sertanejo","show-tunes","singer-songwriter",
+    "ska","sleep","songwriter","soul","soundtracks","spanish","study","summer","swedish","synth-pop",
+    "tango","techno","trance","trip-hop","turkish","work-out","world-music"
+  ];
+
+  let validGenre = supportedGenres.includes(seed) ? seed : null;
+
+  if (!validGenre) {
+    console.warn(`Genre "${seed}" is not in Spotify’s supported seed list. Falling back to keyword search.`);
+    uris = await TrackUrisFromSearch(accessToken, genre, desired);
+  } else {
+    uris = await TrackUrisFromRecommendations(accessToken, { seed_genres: validGenre }, desired);
+  }
+
+  if (!uris || uris.length < desired) {
+    const more = await TrackUrisFromRecommendations(accessToken, { seed_genres: 'pop' }, desired - (uris?.length || 0));
+    uris = (uris || []).concat(more).slice(0, desired);
+  }
+
+  setProgress(65);
+
       } else if (mode === 'artist') {
   setProgress(35);
 
