@@ -46,6 +46,12 @@ const moodMap = {
   "creative flow": "creative flow ambient"
 };
 
+const spotifySeedGenres = [
+  "acoustic","afrobeat","alt-rock","classical","country","dance","deep-house",
+  "disco","edm","electronic","hip-hop","jazz","metal","pop","punk",
+  "rap","reggae","rock","soul","trap","trip-hop"
+];
+
 function LoadingBar({ progress }) {
   return (
     <div style={{ width: '100%', background: '#111', height: 12, borderRadius: 6, overflow: 'hidden' }}>
@@ -176,43 +182,16 @@ function App() {
 
       if (mode === 'genre') {
         setProgress(30);
-        let seed = String(genre).toLowerCase().trim();
-        seed = seed.replace(/\s+/g, '-');
-
-        const supportedGenres = [
-          "acoustic","afrobeat","alt-rock","alternative","ambient","anime","black-metal",
-          "bluegrass","blues","bossanova","brazil","breakbeat","british","cantopop","chicago-house",
-          "children","chill","classical","club","comedy","country","dance","dancehall","death-metal",
-          "deep-house","disco","dub","dubstep","edm","electro","electronic","emo","folk","forro","french",
-          "funk","garage","german","gospel","goth","grindcore","groove","grunge","guitar","happy",
-          "hard-rock","hardcore","hardstyle","heavy-metal","hip-hop","holidays","honky-tonk","house",
-          "idm","indian","indie","indie-pop","industrial","iranian","j-dance","j-idol","j-pop",
-          "j-rock","jazz","k-pop","kids","latin","malay","mandopop","metal","metalcore","minimal-techno",
-          "movies","mpb","new-age","new-release","opera","pagode","party","philippines-opm","piano",
-          "pop","pop-film","post-dubstep","power-pop","progressive-house","psych-rock","punk",
-          "punk-rock","r-n-b","rainy-day","reggae","reggaeton","rock","rock-n-roll","rockabilly",
-          "romance","sad","salsa","sertanejo","show-tunes","singer-songwriter","ska","sleep",
-          "songwriter","soul","soundtracks","spanish","study","summer","swedish","synth-pop",
-          "tango","techno","trance","trip-hop","turkish","work-out","world-music"
-        ];
-
-        let validGenreSeeds = [];
-        if (supportedGenres.includes(seed)) {
-          validGenreSeeds.push(seed);
-        }
-
-        if (validGenreSeeds.length > 0) {
-          // Optionally add a second genre seed for diversity:
-          if (seed !== 'pop' && supportedGenres.includes('pop')) {
-            validGenreSeeds.push('pop');
-          }
-          setProgress(65);
-          uris = await TrackUrisFromRecommendations(accessToken, { seed_genres: validGenreSeeds.join(',') }, desired);
+        const seed = genre.toLowerCase().trim();
+        if (!spotifySeedGenres.includes(seed)) {
+          console.warn(`"${seed}" is not a supported seed genre, falling back to search.`);
+          uris = await TrackUrisFromSearch(accessToken, genre, desired);
+        } else {
+          uris = await TrackUrisFromRecommendations(accessToken, { seed_genres: [seed] }, desired);
         }
 
         if (!uris || uris.length < desired) {
-          // fallback to search
-          const more = await TrackUrisFromSearch(accessToken, genre, desired);
+          const more = await TrackUrisFromSearch(accessToken, genre, desired - (uris?.length || 0));
           uris = (uris || []).concat(more).slice(0, desired);
         }
 
