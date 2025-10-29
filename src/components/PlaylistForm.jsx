@@ -9,27 +9,27 @@ const moodOptions = [
 ];
 
 const genreOptions = [
-  { label: "Pop", value: "pop" },
-  { label: "Rock", value: "rock" },
-  { label: "Hip-Hop", value: "hip-hop" },
-  { label: "Indie", value: "indie" },
-  { label: "Electronic", value: "electronic" },
-  { label: "Dance", value: "dance" },
-  { label: "Jazz", value: "jazz" },
+  { label: "Acoustic", value: "acoustic" },
+  { label: "Afrobeat", value: "afrobeat" },
+  { label: "Alt-Rock", value: "alt-rock" },
   { label: "Classical", value: "classical" },
-  { label: "Blues", value: "blues" },
   { label: "Country", value: "country" },
-  { label: "Reggae", value: "reggae" },
+  { label: "Dance", value: "dance" },
+  { label: "Deep-House", value: "deep-house" },
+  { label: "Disco", value: "disco" },
+  { label: "EDM", value: "edm" },
+  { label: "Electronic", value: "electronic" },
+  { label: "Hip-Hop", value: "hip-hop" },
+  { label: "Jazz", value: "jazz" },
   { label: "Metal", value: "metal" },
-  { label: "Folk", value: "folk" },
-  { label: "Soul", value: "soul" },
-  { label: "R&B", value: "r-n-b" }, 
-  { label: "Latin", value: "latin" },
+  { label: "Pop", value: "pop" },
   { label: "Punk", value: "punk" },
-  { label: "Funk", value: "funk" },
-  { label: "Ambient", value: "ambient" },
-  { label: "K-Pop", value: "k-pop" },
-  { label: "Disco", value: "disco" }
+  { label: "Rap", value: "rap" },
+  { label: "Reggae", value: "reggae" },
+  { label: "Rock", value: "rock" },
+  { label: "Soul", value: "soul" },
+  { label: "Trap", value: "trap" },
+  { label: "Trip-Hop", value: "trip-hop" }
 ];
 
 export default function PlaylistForm({ onSubmit }) {
