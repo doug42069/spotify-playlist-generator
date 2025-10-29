@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/spotify-playlist-generator/static/js/main.4c8945ac.js",
+    "main.js": "/spotify-playlist-generator/static/js/main.084acd78.js",
     "index.html": "/spotify-playlist-generator/index.html",
-    "main.4c8945ac.js.map": "/spotify-playlist-generator/static/js/main.4c8945ac.js.map"
+    "main.084acd78.js.map": "/spotify-playlist-generator/static/js/main.084acd78.js.map"
   },
   "entrypoints": [
-    "static/js/main.4c8945ac.js"
+    "static/js/main.084acd78.js"
   ]
 }
