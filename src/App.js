@@ -175,105 +175,111 @@ function App() {
       let uris = [];
 
       if (mode === 'genre') {
-  setProgress(30);
-  const seed = String(genre).toLowerCase().replace(/\s+/g, '-');
+        setProgress(30);
+        let seed = String(genre).toLowerCase().trim();
+        seed = seed.replace(/\s+/g, '-');
 
-  const supportedGenres = [
-    "acoustic","afrobeat","alt-rock","alternative","ambient","anime","black-metal",
-    "bluegrass","blues","bossanova","brazil","breakbeat","british","cantopop","chicago-house",
-    "classical","club","comedy","country","dance","dancehall","death-metal","deep-house",
-    "detroit-techno","disco","drum-and-bass","dub","dubstep","edm","electronic","emo","folk",
-    "forro","french","funk","garage","german","gospel","goth","grindcore","groove","grunge",
-    "guitar","happy","hard-rock","hardcore","hardstyle","heavy-metal","hip-hop","holidays",
-    "house","idm","indian","indie","indie-pop","industrial","iranian","j-dance","j-idol","j-pop",
-    "j-rock","jazz","k-pop","kids","latin","latino","malay","mandopop","metal","metal-misc",
-    "metalcore","minimal-techno","movies","mpb","new-age","new-release","opera","pagode","party",
-    "philippines-opm","piano","pop","pop-film","post-dubstep","power-pop","progressive-house",
-    "psych-rock","punk","punk-rock","r-n-b","rainy-day","reggae","reggaeton","road-trip","rock",
-    "rock-n-roll","rockabilly","romance","sad","salsa","samba","sertanejo","show-tunes","singer-songwriter",
-    "ska","sleep","songwriter","soul","soundtracks","spanish","study","summer","swedish","synth-pop",
-    "tango","techno","trance","trip-hop","turkish","work-out","world-music"
-  ];
+        const supportedGenres = [
+          "acoustic","afrobeat","alt-rock","alternative","ambient","anime","black-metal",
+          "bluegrass","blues","bossanova","brazil","breakbeat","british","cantopop","chicago-house",
+          "children","chill","classical","club","comedy","country","dance","dancehall","death-metal",
+          "deep-house","disco","dub","dubstep","edm","electro","electronic","emo","folk","forro","french",
+          "funk","garage","german","gospel","goth","grindcore","groove","grunge","guitar","happy",
+          "hard-rock","hardcore","hardstyle","heavy-metal","hip-hop","holidays","honky-tonk","house",
+          "idm","indian","indie","indie-pop","industrial","iranian","j-dance","j-idol","j-pop",
+          "j-rock","jazz","k-pop","kids","latin","malay","mandopop","metal","metalcore","minimal-techno",
+          "movies","mpb","new-age","new-release","opera","pagode","party","philippines-opm","piano",
+          "pop","pop-film","post-dubstep","power-pop","progressive-house","psych-rock","punk",
+          "punk-rock","r-n-b","rainy-day","reggae","reggaeton","rock","rock-n-roll","rockabilly",
+          "romance","sad","salsa","sertanejo","show-tunes","singer-songwriter","ska","sleep",
+          "songwriter","soul","soundtracks","spanish","study","summer","swedish","synth-pop",
+          "tango","techno","trance","trip-hop","turkish","work-out","world-music"
+        ];
 
-  let validGenre = supportedGenres.includes(seed) ? seed : null;
+        let validGenreSeeds = [];
+        if (supportedGenres.includes(seed)) {
+          validGenreSeeds.push(seed);
+        }
 
-  if (!validGenre) {
-    console.warn(`Genre "${seed}" is not in Spotify’s supported seed list. Falling back to keyword search.`);
-    uris = await TrackUrisFromSearch(accessToken, genre, desired);
-  } else {
-    uris = await TrackUrisFromRecommendations(accessToken, { seed_genres: validGenre }, desired);
-  }
+        if (validGenreSeeds.length > 0) {
+          // Optionally add a second genre seed for diversity:
+          if (seed !== 'pop' && supportedGenres.includes('pop')) {
+            validGenreSeeds.push('pop');
+          }
+          setProgress(65);
+          uris = await TrackUrisFromRecommendations(accessToken, { seed_genres: validGenreSeeds.join(',') }, desired);
+        }
 
-  if (!uris || uris.length < desired) {
-    const more = await TrackUrisFromRecommendations(accessToken, { seed_genres: 'pop' }, desired - (uris?.length || 0));
-    uris = (uris || []).concat(more).slice(0, desired);
-  }
+        if (!uris || uris.length < desired) {
+          // fallback to search
+          const more = await TrackUrisFromSearch(accessToken, genre, desired);
+          uris = (uris || []).concat(more).slice(0, desired);
+        }
 
-  setProgress(65);
+        setProgress(80);
 
       } else if (mode === 'artist') {
-  setProgress(35);
-
-  const qs = new URLSearchParams({ q: artist, type: 'artist', limit: 1 }).toString();
-  const res = await fetch(`https://api.spotify.com/v1/search?${qs}`, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
-  if (!res.ok) throw new Error('Artist search failed');
-  const data = await res.json();
-  const artistObj = data.artists?.items?.[0];
-  if (!artistObj) throw new Error('Artist not found');
-  const artistId = artistObj.id;
-
-  const trackPool = new Set();
-
-  setProgress(45);
-  try {
-    const topRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    if (topRes.ok) {
-      const topData = await topRes.json();
-      (topData.tracks || []).forEach(t => t.uri && trackPool.add(t.uri));
-    }
-  } catch {}
-
-  setProgress(60);
-  try {
-    const albQs = new URLSearchParams({ include_groups: 'album,single,compilation', limit: 20 }).toString();
-    const albumsRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/albums?${albQs}`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    if (albumsRes.ok) {
-      const albumsData = await albumsRes.json();
-      const albums = albumsData.items || [];
-      for (const a of albums.slice(0, 10)) {
-        const tracksRes = await fetch(`https://api.spotify.com/v1/albums/${a.id}/tracks?limit=50`, {
+        setProgress(35);
+        const qs = new URLSearchParams({ q: artist, type: 'artist', limit: 1 }).toString();
+        const res = await fetch(`https://api.spotify.com/v1/search?${qs}`, {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
-        if (!tracksRes.ok) continue;
-        const tracksData = await tracksRes.json();
-        (tracksData.items || []).forEach(t => t.uri && trackPool.add(t.uri));
-      }
-    }
-  } catch {}
+        if (!res.ok) throw new Error('Artist search failed');
+        const data = await res.json();
+        const artistObj = data.artists?.items?.[0];
+        if (!artistObj) throw new Error('Artist not found');
+        const artistId = artistObj.id;
 
-  setProgress(75);
-  try {
-    const recs = await TrackUrisFromRecommendations(accessToken, { seed_artists: artistId }, 50);
-    recs.forEach(u => trackPool.add(u));
-  } catch {}
+        const trackPool = new Set();
 
-  let allUris = Array.from(trackPool);
-  if (allUris.length === 0) throw new Error('No tracks found for this artist.');
+        setProgress(45);
+        try {
+          const topRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          if (topRes.ok) {
+            const topData = await topRes.json();
+            (topData.tracks || []).forEach(t => t.uri && trackPool.add(t.uri));
+          }
+        } catch {}
 
-  for (let i = allUris.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [allUris[i], allUris[j]] = [allUris[j], allUris[i]];
-  }
+        setProgress(60);
+        try {
+          const albQs = new URLSearchParams({ include_groups: 'album,single,compilation', limit: 20 }).toString();
+          const albumsRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/albums?${albQs}`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          if (albumsRes.ok) {
+            const albumsData = await albumsRes.json();
+            const albums = albumsData.items || [];
+            for (const a of albums.slice(0, 10)) {
+              const tracksRes = await fetch(`https://api.spotify.com/v1/albums/${a.id}/tracks?limit=50`, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+              });
+              if (!tracksRes.ok) continue;
+              const tracksData = await tracksRes.json();
+              (tracksData.items || []).forEach(t => t.uri && trackPool.add(t.uri));
+            }
+          }
+        } catch {}
 
-  const desired = Math.min(Math.max(Number(count) || 20, 1), 100);
-  uris = allUris.slice(0, desired);
-  setProgress(95);
+        setProgress(75);
+        try {
+          const recs = await TrackUrisFromRecommendations(accessToken, { seed_artists: artistId }, 50);
+          recs.forEach(u => trackPool.add(u));
+        } catch {}
+
+        let allUris = Array.from(trackPool);
+        if (allUris.length === 0) throw new Error('No tracks found for this artist.');
+
+        for (let i = allUris.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [allUris[i], allUris[j]] = [allUris[j], allUris[i]];
+        }
+
+        const desiredArtistCount = Math.min(Math.max(Number(count) || 20, 1), 100);
+        uris = allUris.slice(0, desiredArtistCount);
+        setProgress(95);
 
       } else {
         setProgress(30);
@@ -290,10 +296,8 @@ function App() {
       if (!uris || uris.length === 0) throw new Error('No tracks found for that selection.');
 
       const finalName = title || (mode === 'genre' ? `Genre: ${genre}` : mode === 'artist' ? `Artist: ${artist}` : `Mood: ${mood}`);
-      setProgress(80);
+      setProgress(90);
       const playlist = await createPlaylistAndAddTracks(accessToken, currentUserId, finalName, uris);
-      setProgress(95);
-
       setPlaylistUrl(playlist.external_urls?.spotify || `https://open.spotify.com/playlist/${playlist.id}`);
       setPlaylistName(finalName);
       setProgress(100);
