@@ -58,37 +58,71 @@ export default function PlaylistForm({ onSubmit }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12 }}>
-      <div>
-        <label style={{ marginRight: 8 }}><strong>Type</strong></label>
-        <label style={{ marginRight: 8 }}>
-          <input type="radio" name="mode" value="mood" checked={mode === 'mood'} onChange={() => setMode('mood')} /> Mood
-        </label>
-        <label style={{ marginRight: 8 }}>
-          <input type="radio" name="mode" value="genre" checked={mode === 'genre'} onChange={() => setMode('genre')} /> Genre
-        </label>
-        <label>
-          <input type="radio" name="mode" value="artist" checked={mode === 'artist'} onChange={() => setMode('artist')} /> Artist
-        </label>
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        backgroundColor: '#121212',
+        color: '#fff',
+        padding: '24px',
+        borderRadius: '16px',
+        width: '100%',
+        maxWidth: '480px',
+        margin: '0 auto',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+        fontFamily: 'system-ui, sans-serif',
+      }}
+    >
+      <h2 style={{ textAlign: 'center', marginBottom: 20, color: '#1DB954' }}>
+        🎵 Generate a Spotify Playlist
+      </h2>
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+        {['mood', 'genre', 'artist'].map((m) => (
+          <label key={m} style={{ margin: '0 8px', cursor: 'pointer' }}>
+            <input
+              type="radio"
+              name="mode"
+              value={m}
+              checked={mode === m}
+              onChange={() => setMode(m)}
+              style={{ marginRight: 6 }}
+            />
+            {m.charAt(0).toUpperCase() + m.slice(1)}
+          </label>
+        ))}
       </div>
 
-      <div>
-        <label style={{ display: 'block', fontWeight: 'bold' }}>Playlist title (optional)</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 6 }}>Playlist title (optional)</label>
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
-          placeholder="e.g. My Playlist"
-          style={{ padding: 8, width: '100%' }}
+          placeholder="e.g. My Vibe Mix"
+          style={{
+            padding: 10,
+            width: '100%',
+            borderRadius: 6,
+            border: '1px solid #333',
+            backgroundColor: '#181818',
+            color: 'white'
+          }}
         />
       </div>
 
       {mode === 'mood' && (
-        <div>
-          <label style={{ display: 'block', fontWeight: 'bold' }}>Mood</label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 6 }}>Mood</label>
           <select
             value={mood}
             onChange={e => setMood(e.target.value)}
-            style={{ padding: 8, width: '100%' }}
+            style={{
+              padding: 10,
+              width: '100%',
+              borderRadius: 6,
+              border: '1px solid #333',
+              backgroundColor: '#181818',
+              color: 'white'
+            }}
           >
             <option value="">-- choose a mood --</option>
             {moodOptions.map(m => <option key={m} value={m}>{m}</option>)}
@@ -97,12 +131,19 @@ export default function PlaylistForm({ onSubmit }) {
       )}
 
       {mode === 'genre' && (
-        <div>
-          <label style={{ display: 'block', fontWeight: 'bold' }}>Genre</label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 6 }}>Genre</label>
           <select
             value={genre}
             onChange={e => setGenre(e.target.value)}
-            style={{ padding: 8, width: '100%' }}
+            style={{
+              padding: 10,
+              width: '100%',
+              borderRadius: 6,
+              border: '1px solid #333',
+              backgroundColor: '#181818',
+              color: 'white'
+            }}
           >
             {genreOptions.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
           </select>
@@ -110,45 +151,57 @@ export default function PlaylistForm({ onSubmit }) {
       )}
 
       {mode === 'artist' && (
-        <div>
-          <label style={{ display: 'block', fontWeight: 'bold' }}>Artist name</label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 6 }}>Artist name</label>
           <input
             value={artist}
             onChange={e => setArtist(e.target.value)}
             placeholder="e.g. Childish Gambino"
-            style={{ padding: 8, width: '100%' }}
+            style={{
+              padding: 10,
+              width: '100%',
+              borderRadius: 6,
+              border: '1px solid #333',
+              backgroundColor: '#181818',
+              color: 'white'
+            }}
           />
         </div>
       )}
 
-      <div>
-        <label style={{ display: 'block', fontWeight: 'bold' }}>Number of songs: {count}</label>
+      <div style={{ marginBottom: 20 }}>
+        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 6 }}>Number of songs: {count}</label>
         <input
           type="range"
           min="1"
           max="50"
           value={count}
           onChange={e => setCount(e.target.value)}
-          style={{ width: '100%' }}
+          style={{
+            width: '100%',
+            accentColor: '#1DB954'
+          }}
         />
       </div>
 
-      <div>
-        <button
-          type="submit"
-          style={{
-            padding: '12px',
-            backgroundColor: '#1DB954',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}
-        >
-          Generate Playlist
-        </button>
-      </div>
+      <button
+        type="submit"
+        style={{
+          width: '100%',
+          padding: '12px',
+          backgroundColor: '#1DB954',
+          color: '#fff',
+          fontWeight: 'bold',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          transition: 'background 0.3s'
+        }}
+        onMouseOver={e => (e.target.style.backgroundColor = '#1ed760')}
+        onMouseOut={e => (e.target.style.backgroundColor = '#1DB954')}
+      >
+        Generate Playlist
+      </button>
     </form>
   );
 }
