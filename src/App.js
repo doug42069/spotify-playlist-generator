@@ -198,67 +198,93 @@ function App() {
         setProgress(80);
 
       } else if (mode === 'artist') {
-        setProgress(35);
-        const qs = new URLSearchParams({ q: artist, type: 'artist', limit: 1 }).toString();
-        const res = await fetch(`https://api.spotify.com/v1/search?${qs}`, {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        });
-        if (!res.ok) throw new Error('Artist search failed');
-        const data = await res.json();
-        const artistObj = data.artists?.items?.[0];
-        if (!artistObj) throw new Error('Artist not found');
-        const artistId = artistObj.id;
+  setProgress(35);
 
-        const trackPool = new Set();
+  const userInput = artist.toLowerCase().trim();
 
-        setProgress(45);
-        try {
-          const topRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
-          if (topRes.ok) {
-            const topData = await topRes.json();
-            (topData.tracks || []).forEach(t => t.uri && trackPool.add(t.uri));
-          }
-        } catch {}
+  const qs = new URLSearchParams({
+    q: `artist:"${artist}"`,
+    type: 'artist',
+    limit: 10
+  }).toString();
 
-        setProgress(60);
-        try {
-          const albQs = new URLSearchParams({ include_groups: 'album,single,compilation', limit: 20 }).toString();
-          const albumsRes = await fetch(`https://api.spotify.com/v1/artists/${artistId}/albums?${albQs}`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
-          if (albumsRes.ok) {
-            const albumsData = await albumsRes.json();
-            const albums = albumsData.items || [];
-            for (const a of albums.slice(0, 10)) {
-              const tracksRes = await fetch(`https://api.spotify.com/v1/albums/${a.id}/tracks?limit=50`, {
-                headers: { Authorization: `Bearer ${accessToken}` }
-              });
-              if (!tracksRes.ok) continue;
-              const tracksData = await tracksRes.json();
-              (tracksData.items || []).forEach(t => t.uri && trackPool.add(t.uri));
-            }
-          }
-        } catch {}
+  const res = await fetch(`https://api.spotify.com/v1/search?${qs}`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
 
-        setProgress(75);
-        try {
-          const recs = await TrackUrisFromRecommendations(accessToken, { seed_artists: artistId }, 50);
-          recs.forEach(u => trackPool.add(u));
-        } catch {}
+  if (!res.ok) throw new Error('Artist search failed');
 
-        let allUris = Array.from(trackPool);
-        if (allUris.length === 0) throw new Error('No tracks found for this artist.');
+  const data = await res.json();
+  const items = data.artists?.items || [];
 
-        for (let i = allUris.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [allUris[i], allUris[j]] = [allUris[j], allUris[i]];
-        }
+  if (items.length === 0) throw new Error('Artist not found');
 
-        const desiredArtistCount = Math.min(Math.max(Number(count) || 20, 1), 100);
-        uris = allUris.slice(0, desiredArtistCount);
-        setProgress(95);
+  let artistObj =
+    items.find(a => a.name.toLowerCase().trim() === userInput) ||
+    items[0];
+
+  const artistId = artistObj.id;
+
+  const trackPool = new Set();
+
+  setProgress(50);
+  try {
+    const topRes = await fetch(
+      `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (topRes.ok) {
+      const topData = await topRes.json();
+      (topData.tracks || []).forEach(t => t.uri && trackPool.add(t.uri));
+    }
+  } catch {}
+
+  setProgress(65);
+  try {
+    const albRes = await fetch(
+      `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album,single,compilation&limit=20`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    if (albRes.ok) {
+      const albData = await albRes.json();
+      const albums = albData.items || [];
+
+      for (const album of albums.slice(0, 10)) {
+        const tRes = await fetch(
+          `https://api.spotify.com/v1/albums/${album.id}/tracks?limit=50`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+
+        if (!tRes.ok) continue;
+
+        const tData = await tRes.json();
+        (tData.items || []).forEach(t => t.uri && trackPool.add(t.uri));
+      }
+    }
+  } catch {}
+
+  setProgress(80);
+  try {
+    const recs = await TrackUrisFromRecommendations(
+      accessToken,
+      { seed_artists: artistId },
+      50
+    );
+    recs.forEach(u => trackPool.add(u));
+  } catch {}
+
+  let allUris = Array.from(trackPool);
+  if (allUris.length === 0) throw new Error('No tracks found for this artist.');
+
+  for (let i = allUris.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allUris[i], allUris[j]] = [allUris[j], allUris[i]];
+  }
+
+  const desiredArtistCount = Math.min(Math.max(Number(count) || 20, 1), 100);
+  uris = allUris.slice(0, desiredArtistCount);
+  setProgress(95);
 
       } else {
         setProgress(30);
